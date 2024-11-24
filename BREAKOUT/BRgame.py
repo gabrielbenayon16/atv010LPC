@@ -1,65 +1,49 @@
-import time
+from BRpaddle import Paddle
 from BRball import Ball
-from BREAKOUT.BRpaddle import Paddle
 from BRblock import Block
+from BRscore import Score  # Importa a nova classe Score
+import time
+import random
 
 class Game:
     def __init__(self):
-        self.ball = Ball(10, -2, 5, 10)
-        self.paddle = Paddle(10, 9, 100)
-        self.blocks = [
-            Block(x * 60, 200, 50, 20) for x in range(5)
-        ]  # Cria 5 blocos na linha 200
+        self.blocks = []
+        self.paddle = Paddle(45, 95, 10, 1, 5)
+        self.ball = Ball(random.randint(10, 90), random.randint(10, 50), 1, 1, 1)
         self.running = True
-        self.score = 0  # Pontuação do jogo
+        self.score = Score()  # Instancia o objeto Score
+        self.createBlocks()
 
-    def check_collisions(self):
-        ball_x, ball_y = self.ball.get_position()
+    def createBlocks(self):
+        colors = ["Red", "Yellow", "Green"]  # Adicione outras cores, se necessário
+        for i in range(3):  # Três linhas de blocos
+            for j in range(10):  # Dez blocos por linha
+                self.blocks.append(Block(j * 10, i * 3, 10, 3, colors[i]))
 
-        # Verifica colisão com os blocos
-        for block in self.blocks:
-            if not block.destroyed and block.collides_with(ball_x, ball_y, self.ball.size):
-                print("A bola colidiu com um bloco!")
-                block.destroyed = True  # Marca o bloco como destruído
-                self.ball.speedY = -self.ball.speedY  # Reverte direção Y
-                self.score += 10  # Incrementa a pontuação
-                break  # Só uma colisão por vez
-
-        # Verifica colisão com a raquete
-        paddle_x, paddle_y = self.paddle.get_position()
-        if (paddle_x <= ball_x <= paddle_x + self.paddle.width and
-                paddle_y <= ball_y <= paddle_y + 10):  # Tolerância de 10px
-            print("A bola colidiu com a raquete!")
-            self.ball.speedY = -self.ball.speedY  # Reverte direção Y
-
-    def update(self):
+    def updateGame(self):
+        self.paddle.autoMove(self.ball.x)
         self.ball.move()
+        if self.ball.y > 100:
+            print("A bola caiu. Fim de jogo!")
+            self.running = False
+        else:
+            # Verifica colisão com a raquete e os blocos
+            if self.ball.handleCollision(self.paddle, self.blocks):
+                # Obtém a cor do bloco destruído
+                block_color = self.blocks[-1].color if self.blocks else "Unknown"
+                self.score.increment(block_color)  # Incrementa pontuação com base na cor
+        if not self.blocks:
+            print("Você destruiu todos os blocos! Parabéns!")
+            self.running = False
 
-    def draw_status(self):
-        """
-        Exibe o status do jogo no terminal.
-        """
-        ball_x, ball_y = self.ball.get_position()
-        paddle_x, paddle_y = self.paddle.get_position()
-        blocks_remaining = sum(1 for block in self.blocks if not block.destroyed)
+    def draw(self):
+        print(f"Bola: ({self.ball.x}, {self.ball.y}) | Raquete: ({self.paddle.x}, {self.paddle.y}) | Blocos restantes: {len(self.blocks)}")
+        self.score.draw()  # Exibe a pontuação atual
 
-        print(f"Posição da bola: ({ball_x}, {ball_y})")
-        print(f"Raquete em: ({paddle_x}, {paddle_y})")
-        print(f"Blocos restantes: {blocks_remaining}")
-        print(f"Pontuação: {self.score}")
-        print("------")
-
-    def run(self):
-        print("Iniciando o jogo...")
+    def gameLoop(self):
+        print("Iniciando simulação do Breakout...")
         while self.running:
-            self.update()
-            self.check_collisions()
-            self.draw_status()
-
-            # Stop the game if the ball goes off the screen
-            _, ball_y = self.ball.get_position()
-            if ball_y > 500:  # Simula o fim do jogo
-                print("Fim do jogo! A bola saiu dos limites.")
-                self.running = False
-
-            time.sleep(2)  # Simula o intervalo de tempo
+            self.updateGame()
+            self.draw()
+            time.sleep(0.5)  # Simula o tempo de jogo
+        print(f"Pontuação final: {self.score.value}")  # Exibe a pontuação final
