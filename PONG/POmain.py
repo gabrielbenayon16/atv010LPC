@@ -2,7 +2,7 @@ from POgame import Game
 
 def main():
     game = Game()
-    game.startGame()  # Inicia a simulação do jogo
+    game.startGame()
 
 
 if __name__ == "__main__":
