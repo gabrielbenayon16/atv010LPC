@@ -4,13 +4,10 @@ class Score:
 
     def increment(self, color):
         points = 0
-        # If the block is yellow, add 1 point
         if color == "Yellow":
             points = 1
-        # If the block is green, add 3 points
         elif color == "Green":
             points = 3
-        # If the block is red, add 7 points
         elif color == "Red":
             points = 7
         else:
